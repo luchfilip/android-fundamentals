@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Day 2 Exercise 1: Add internet permission here. See Hints.Day2Exercise1 -->
+
+    <application
+        android:name=".HoarderApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Hoarder">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Hoarder">
+            <!-- Launcher intent filter - show in app drawer -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Day 2 Exercise 5: Add share intent filter here
+            action.SEND category.DEFAULT
+            data mimeType="text/plain"
+                 Stuck? See Hints.Day2Exercise5 -->
+        </activity>
+    </application>
+
+</manifest>
