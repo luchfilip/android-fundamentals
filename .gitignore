@@ -7,7 +7,9 @@
 *.dex
 .docs
 .claude
-*gira
+.gira
+.ai
+
 # Java class files
 *.class
 
