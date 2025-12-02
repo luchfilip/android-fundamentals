@@ -1,48 +1,24 @@
 package engineer.filip.hoarder.ui.home
 
-import android.net.Uri
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import engineer.filip.hoarder.data.ShareHandler
 import engineer.filip.hoarder.data.model.Bookmark
 import engineer.filip.hoarder.data.repository.BookmarkRepository
 import engineer.filip.hoarder.ui.Hints
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
-
-/**
- * Immutable UI state for the Home screen.
- * All UI state lives here - single source of truth.
- *
- * Day 1 Exercise 10: Add an `itemCount: Int = 0` field
- * Day 2 Exercise 13: Add searchQuery for debounce search
- *
- * Stuck? Cmd+Click: [Hints.Exercise10] or [Hints.Day2Exercise13]
- */
-@Immutable
-data class HomeUiState(
-    val bookmarks: List<Bookmark> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-    // TODO Day 2 Exercise 13: Add val searchQuery: String = ""
-) {
-    @Suppress("unused") private val _hint10 = Hints.Exercise10
-    @Suppress("unused") private val _hint13 = Hints.Day2Exercise13
-}
 
 /**
  * User actions/intents for the Home screen.
@@ -60,23 +36,13 @@ sealed interface HomeAction {
     data class DeleteBookmark(val bookmarkId: String) : HomeAction
     data class DeleteBookmarkClick(val bookmarkId: String) : HomeAction
     data class BookmarkClick(val bookmarkId: String) : HomeAction
-
+    data object ClearAll: HomeAction
     // TODO Day 1 Exercise 11: Add data object ClearAll : HomeAction
 
     // TODO Day 2 Exercise 13: Add data class SearchQueryChanged(val query: String) : HomeAction
 
     @Suppress("unused") private val _hint11: Any get() = Hints.Exercise11
     @Suppress("unused") private val _hint13: Any get() = Hints.Day2Exercise13
-}
-
-/**
- * One-time navigation events emitted via SharedFlow.
- * These are consumed once by the UI and trigger navigation.
- */
-@Stable
-sealed interface HomeEvent {
-    data class NavigateToDetail(val bookmarkId: String) : HomeEvent
-    data class NavigateToDeleteConfirmation(val bookmarkId: String) : HomeEvent
 }
 
 /**
@@ -118,11 +84,19 @@ class HomeViewModel @Inject constructor(
             is HomeAction.BookmarkClick -> onBookmarkClick(action.bookmarkId)
             // TODO Exercise 11: Handle ClearAll
             // TODO Exercise 13: Handle SearchQueryChanged
+            HomeAction.ClearAll -> clearAll()
+        }
+    }
+
+    private fun clearAll() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.clearAll()
+            loadBookmarks()
         }
     }
 
     private fun loadBookmarks() {
-        viewModelScope.launch {
+        viewModelScope.launch(context = Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val bookmarks = repository.getBookmarks()
@@ -131,7 +105,8 @@ class HomeViewModel @Inject constructor(
                     it.copy(
                         bookmarks = bookmarks,
                         isLoading = false,
-                        error = null
+                        error = null,
+                        counter = bookmarks.size
                     )
                 }
             } catch (e: Exception) {
@@ -146,7 +121,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun addBookmark(bookmark: Bookmark) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val count = uiState.value.bookmarks.size
             repository.addBookmark(bookmark.copy(title = bookmark.title + " $count"))
             loadBookmarks()
@@ -154,20 +129,20 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun deleteBookmark(bookmarkId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             repository.deleteBookmark(bookmarkId)
             loadBookmarks()
         }
     }
 
     private fun onBookmarkClick(bookmarkId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _events.emit(HomeEvent.NavigateToDetail(bookmarkId))
         }
     }
 
     private fun onDeleteBookmarkClick(bookmarkId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _events.emit(HomeEvent.NavigateToDeleteConfirmation(bookmarkId))
         }
     }

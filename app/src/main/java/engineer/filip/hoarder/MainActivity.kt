@@ -33,12 +33,15 @@ class MainActivity : ComponentActivity() {
 
     // TODO: Inject ShareHandler
 
+    override fun onResume() {
+        super.onResume()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         // TODO: Handle share intent
-
         setContent {
             HoarderTheme {
                 val navController = rememberNavController()

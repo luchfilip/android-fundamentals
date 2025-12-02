@@ -1,6 +1,8 @@
 package engineer.filip.hoarder.ui.home
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,11 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -29,23 +32,24 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import engineer.filip.hoarder.data.model.Bookmark
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
+import java.util.UUID
 
 /**
  * Screen-level composable. Handles ViewModel and state management.
@@ -61,7 +65,12 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(Unit) {
+        scope.launch {
 
+        }
+    }
     // Observe one-time events for navigation
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -94,23 +103,36 @@ fun HomeContent(
     onAction: (HomeAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Hoarder") }
+                title = { Text("Hoarder") },
                 // TODO Exercise 11: Add ClearAll IconButton. See Hints.Exercise11
+                actions = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "delete all",
+                        modifier = Modifier.clickable {
+                            onAction(HomeAction.ClearAll)
+                        }
+                    )
+                }
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // TODO Exercise 12: Create Bookmark and add it. See Hints.Exercise12
+                    onAction(HomeAction.AddBookmark(Bookmark(
+                        id = UUID.randomUUID().toString(),
+                        title = "Bookmark Title"
+                    )))
                 }
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add bookmark"
+                Text(
+                    text = "#${state.counter}",
+                    fontSize = 16.sp
                 )
             }
         }
@@ -123,18 +145,39 @@ fun HomeContent(
         // Day 3 Exercise 4b: Find the performance issue in this LazyColumn
         // Hint: Look at how lambdas are passed to BookmarkItem
         // Stuck? See Hints.Day3Exercise4b
-        LazyColumn(
-            modifier = Modifier.padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(items = state.bookmarks) { bookmark ->
-                BookmarkItem(
-                    bookmark = bookmark,
-                    onClick = { onAction(HomeAction.BookmarkClick(bookmark.id)) },
-                    onDeleteClick = { onAction(HomeAction.DeleteBookmarkClick(bookmark.id)) }
+        when {
+            state.bookmarks.isEmpty() -> {
+                EmptyState(modifier = Modifier.padding(innerPadding))
+            }
+
+            else -> {
+                BookmarkItems(
+                    modifier = Modifier.padding(innerPadding),
+                    bookmarks = state.bookmarks,
+                    onAction = onAction
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun BookmarkItems(
+    modifier: Modifier,
+    bookmarks: List<Bookmark>,
+    onAction: (HomeAction) -> Unit
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(items = bookmarks) {
+            BookmarkItem(
+                bookmark = it,
+                onClick = { onAction(HomeAction.BookmarkClick(it.id)) },
+                onDeleteClick = { onAction(HomeAction.DeleteBookmarkClick(it.id)) }
+            )
         }
     }
 }
@@ -194,7 +237,30 @@ fun BookmarkItem(
  */
 @Composable
 fun EmptyState(modifier: Modifier = Modifier) {
-    // TODO: Implement empty state UI (icon, title, subtitle)
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.FilterList,
+                contentDescription = "empty icon",
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+            )
+            Text(text = "No Bookmarks")
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EmptyStatePreview() {
+    EmptyState()
 }
 
 @Preview(showBackground = true)

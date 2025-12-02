@@ -152,9 +152,8 @@ class KotlinPlayground {
 
         // let - transform and return result
         val name: String? = "Kotlin"
-        val upperName = name?.let {
-            println("Inside let: $it")
-            it.uppercase()
+        val upperName = name.let { name ->
+            name?.uppercase()
         }
         println("let result: $upperName")
 
@@ -209,7 +208,7 @@ class KotlinPlayground {
         val numbers = listOf(1, 2, 3, 4, 5)
 
         // map - transform each element
-        val doubled = numbers.map { it * 2 }
+        val doubled = numbers.map { number -> number * 2 }
         println("Doubled: $doubled")
 
         // filter - keep elements matching predicate

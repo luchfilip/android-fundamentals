@@ -3,6 +3,7 @@ package engineer.filip.hoarder.data.repository
 import engineer.filip.hoarder.data.model.Bookmark
 import engineer.filip.hoarder.ui.Hints
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
