@@ -1,7 +1,9 @@
 package engineer.filip.hoarder
 
+import android.app.ComponentCaller
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -61,4 +63,9 @@ class MainActivity : ComponentActivity() {
 
     @Suppress("unused")
     private val _hint = Hints.Day2Exercise7
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        Log.d("MainActivity", "onNewIntent: ${intent.getStringExtra(Intent.EXTRA_TEXT)}")
+    }
 }

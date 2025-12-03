@@ -16,7 +16,7 @@ navVersion = "2.9.5"
 activityCompose = "1.11.0"
 composeBom = "2025.10.00"
 runtime = "1.9.3"
-koinVersion = "1.2.3-alpha03"
+koinVersion = "4.1.1"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
