@@ -1,12 +1,15 @@
 package engineer.filip.hoarder.navigation
 
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.dialog
 import androidx.navigation.toRoute
+import engineer.filip.hoarder.SecondActivity
 import engineer.filip.hoarder.ui.deleteconfirmation.DeleteConfirmationScreen
 import engineer.filip.hoarder.ui.detail.DetailScreen
 import engineer.filip.hoarder.ui.home.HomeScreen
@@ -26,6 +29,7 @@ fun NavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     NavHost(
         navController = navController,
         startDestination = Home,
@@ -34,7 +38,9 @@ fun NavGraph(
         composable<Home> {
             HomeScreen(
                 onNavigateToDetail = { bookmarkId ->
-                    navController.navigate(Detail(bookmarkId))
+//                    navController.navigate(Detail(bookmarkId))
+                    val intent = Intent(context, SecondActivity::class.java)
+                    context.startActivity(intent)
                 },
                 onNavigateToDeleteConfirmation = { bookmarkId ->
                     navController.navigate(DeleteConfirmation(bookmarkId))

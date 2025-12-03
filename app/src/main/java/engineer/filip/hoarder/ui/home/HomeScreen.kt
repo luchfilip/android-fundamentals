@@ -17,10 +17,12 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -38,6 +40,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -126,7 +130,9 @@ fun HomeContent(
                 onClick = {
                     onAction(HomeAction.AddBookmark(Bookmark(
                         id = UUID.randomUUID().toString(),
-                        title = "Bookmark Title"
+                        title = "Bookmark Title",
+                        url = "https://google.com",
+                        notes = "My custom note"
                     )))
                 }
             ) {
@@ -170,7 +176,7 @@ fun BookmarkItems(
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(items = bookmarks) {
             BookmarkItem(
@@ -195,7 +201,11 @@ fun BookmarkItem(
     // TODO Exercise 8: Add .border(2.dp, Color.Blue) to Card modifier
     Card(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth()
+        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+        shape = RoundedCornerShape(40.dp),
+        modifier = modifier.fillMaxSize().graphicsLayer() {
+            clip = false
+        }
     ) {
         Row(
             modifier = Modifier

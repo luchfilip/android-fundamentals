@@ -16,6 +16,7 @@ navVersion = "2.9.5"
 activityCompose = "1.11.0"
 composeBom = "2025.10.00"
 runtime = "1.9.3"
+koinVersion = "1.2.3-alpha03"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
@@ -45,6 +46,8 @@ kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collec
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+#io.insert-koin:koin-androidx-navigation:1.2.3-alpha03
+koin = { module = "io.insert-koin:koin-androidx-navigation", version.ref = "koinVersion"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

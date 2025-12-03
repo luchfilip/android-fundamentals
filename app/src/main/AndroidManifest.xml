@@ -28,6 +28,9 @@
             data mimeType="text/plain"
                  Stuck? See Hints.Day2Exercise5 -->
         </activity>
+        <activity android:name=".SecondActivity"
+            android:exported="false"
+            />
     </application>
 
 </manifest>

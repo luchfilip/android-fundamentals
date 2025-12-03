@@ -87,7 +87,10 @@ fun DetailContent(
                 },
                 actions = {
                     if (state.bookmark != null) {
-                        IconButton(onClick = { onAction(DetailAction.DeleteClick) }) {
+                        IconButton(onClick = {
+                            onAction(DetailAction.DeleteClick)
+                            state
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Delete bookmark"
