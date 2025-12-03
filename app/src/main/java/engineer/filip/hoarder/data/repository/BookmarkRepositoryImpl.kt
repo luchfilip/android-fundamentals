@@ -1,6 +1,10 @@
 package engineer.filip.hoarder.data.repository
 
+import android.content.SharedPreferences
+import androidx.core.content.edit
+import com.google.gson.Gson
 import engineer.filip.hoarder.data.model.Bookmark
+import engineer.filip.hoarder.data.model.toBookmarkList
 import engineer.filip.hoarder.ui.Hints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -15,17 +19,29 @@ import javax.inject.Singleton
  */
 @Singleton
 class BookmarkRepositoryImpl @Inject constructor(
-    // TODO: Inject SharedPreferences here
+    private val prefs: SharedPreferences
 ) : BookmarkRepository {
 
     // TODO: Create Gson instance
+    private val gson = Gson()
 
     private val bookmarks = mutableListOf<Bookmark>()
 
     // TODO: Implement loadFromPrefs()
     // TODO: Implement saveToPrefs()
+    private fun saveToPrefs() {
+        prefs.edit {
+            putString(
+                "bookmarks_key", gson.toJson(bookmarks)
+            ).apply()
+        }
+    }
 
     override suspend fun getBookmarks(): List<Bookmark> {
+        val json = prefs.getString("bookmarks_key", null)
+        val prefsBookmarks = json.toBookmarkList()
+        bookmarks.clear()
+        bookmarks.addAll(prefsBookmarks)
         return bookmarks.toList()
     }
 
@@ -35,27 +51,25 @@ class BookmarkRepositoryImpl @Inject constructor(
 
     override suspend fun addBookmark(bookmark: Bookmark) {
         bookmarks.add(bookmark)
-        // TODO: Call saveToPrefs()
-        Unit
+        saveToPrefs()
     }
 
     override suspend fun updateBookmark(bookmark: Bookmark) {
         val index = bookmarks.indexOfFirst { it.id == bookmark.id }
         if (index != -1) {
             bookmarks[index] = bookmark
-            // TODO: Call saveToPrefs()
+            saveToPrefs()
         }
     }
 
     override suspend fun deleteBookmark(bookmarkId: String) {
         bookmarks.removeAll { it.id == bookmarkId }
-        // TODO: Call saveToPrefs()
-        Unit
+        saveToPrefs()
     }
 
     override suspend fun clearAll() {
         bookmarks.clear()
-        // TODO: Call saveToPrefs()
+        saveToPrefs()
     }
 
     // TODO: create companion object with private shared prefs key

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import engineer.filip.hoarder.data.ShareHandler
 import engineer.filip.hoarder.data.model.Bookmark
 import engineer.filip.hoarder.data.repository.BookmarkRepository
 import engineer.filip.hoarder.ui.Hints
@@ -15,9 +16,12 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -36,13 +40,15 @@ sealed interface HomeAction {
     data class DeleteBookmark(val bookmarkId: String) : HomeAction
     data class DeleteBookmarkClick(val bookmarkId: String) : HomeAction
     data class BookmarkClick(val bookmarkId: String) : HomeAction
-    data object ClearAll: HomeAction
+    data object ClearAll : HomeAction
     // TODO Day 1 Exercise 11: Add data object ClearAll : HomeAction
 
     // TODO Day 2 Exercise 13: Add data class SearchQueryChanged(val query: String) : HomeAction
 
-    @Suppress("unused") private val _hint11: Any get() = Hints.Exercise11
-    @Suppress("unused") private val _hint13: Any get() = Hints.Day2Exercise13
+    @Suppress("unused")
+    private val _hint11: Any get() = Hints.Exercise11
+    @Suppress("unused")
+    private val _hint13: Any get() = Hints.Day2Exercise13
 }
 
 /**
@@ -53,8 +59,8 @@ sealed interface HomeAction {
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: BookmarkRepository
-    // TODO: Inject ShareHandler
+    private val repository: BookmarkRepository,
+    private val shareHandler: ShareHandler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -67,13 +73,36 @@ class HomeViewModel @Inject constructor(
 
     init {
         loadBookmarks()
-        // TODO Exercise 8: Call observeSharedContent()
+        observeSharedContent()
+
         // TODO Exercise 13: Call observeSearch()
     }
 
     // TODO Exercise 8: Implement observeSharedContent()
     // TODO Exercise 9: Implement extractTitle(text: String)
     // TODO Exercise 13: Implement observeSearch()
+
+    private fun observeSharedContent() {
+        viewModelScope.launch {
+            shareHandler.pendingShare.filterNotNull().collect { sharedText ->
+                val parts = sharedText.split("\n")
+                val title = parts.first().removeSurrounding("\"")
+                val url = parts
+                    .getOrNull(1)
+                    ?.split("#:~:text=")
+                    ?.first()
+                    .orEmpty()
+                addBookmark(
+                    Bookmark(
+                        id = UUID.randomUUID().toString(),
+                        title = title,
+                        url = url
+                    )
+                )
+                shareHandler.consumeIntent()
+            }
+        }
+    }
 
     fun onAction(action: HomeAction) {
         when (action) {
@@ -122,8 +151,7 @@ class HomeViewModel @Inject constructor(
 
     private fun addBookmark(bookmark: Bookmark) {
         viewModelScope.launch(Dispatchers.IO) {
-            val count = uiState.value.bookmarks.size
-            repository.addBookmark(bookmark.copy(title = bookmark.title + " $count"))
+            repository.addBookmark(bookmark.copy(title = bookmark.title))
             loadBookmarks()
         }
     }
@@ -149,8 +177,12 @@ class HomeViewModel @Inject constructor(
 
     // TODO Exercise 11: Implement clearAll()
 
-    @Suppress("unused") private val _hint8 = Hints.Day2Exercise8
-    @Suppress("unused") private val _hint9 = Hints.Day2Exercise9
-    @Suppress("unused") private val _hint11 = Hints.Exercise11
-    @Suppress("unused") private val _hint13 = Hints.Day2Exercise13
+    @Suppress("unused")
+    private val _hint8 = Hints.Day2Exercise8
+    @Suppress("unused")
+    private val _hint9 = Hints.Day2Exercise9
+    @Suppress("unused")
+    private val _hint11 = Hints.Exercise11
+    @Suppress("unused")
+    private val _hint13 = Hints.Day2Exercise13
 }

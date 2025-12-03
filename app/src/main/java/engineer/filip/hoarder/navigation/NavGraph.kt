@@ -38,9 +38,7 @@ fun NavGraph(
         composable<Home> {
             HomeScreen(
                 onNavigateToDetail = { bookmarkId ->
-//                    navController.navigate(Detail(bookmarkId))
-                    val intent = Intent(context, SecondActivity::class.java)
-                    context.startActivity(intent)
+                    navController.navigate(Detail(bookmarkId))
                 },
                 onNavigateToDeleteConfirmation = { bookmarkId ->
                     navController.navigate(DeleteConfirmation(bookmarkId))

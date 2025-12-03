@@ -1,5 +1,7 @@
 package engineer.filip.hoarder.ui.detail
 
+import android.content.Intent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,8 +25,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import engineer.filip.hoarder.data.model.Bookmark
@@ -72,6 +76,7 @@ fun DetailContent(
     onAction: (DetailAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -116,10 +121,14 @@ fun DetailContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // TODO Exercise 3: Make URL clickable to open in browser
+
                 Text(
                     text = bookmark.url,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, bookmark.url.toUri())
+                        context.startActivity(intent)
+                    }
                 )
                 // TODO Exercise 14: Add "Copy URL" button, format created date
 

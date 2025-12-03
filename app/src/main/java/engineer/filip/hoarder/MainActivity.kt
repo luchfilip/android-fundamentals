@@ -16,12 +16,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import engineer.filip.hoarder.data.ShareHandler
 import engineer.filip.hoarder.navigation.NavGraph
 import engineer.filip.hoarder.theme.HoarderTheme
 import engineer.filip.hoarder.ui.Hints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 /**
  * Day 2 Exercise 7: Handle share intents from other apps.
@@ -34,6 +36,8 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     // TODO: Inject ShareHandler
+    @Inject
+    lateinit var shareHandler: ShareHandler
 
     override fun onResume() {
         super.onResume()
@@ -42,7 +46,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
+        handleShareIntent(intent)
         // TODO: Handle share intent
         setContent {
             HoarderTheme {
@@ -67,5 +71,16 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Log.d("MainActivity", "onNewIntent: ${intent.getStringExtra(Intent.EXTRA_TEXT)}")
+        handleShareIntent(intent)
+    }
+
+    private fun handleShareIntent(intent: Intent?) {
+        Log.d("MainActivity", "intent: $intent")
+        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+//            val sharedText = intent.extras.toString()
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+            shareHandler.onShareReceived(sharedText)
+            Log.d("MainActivity", "intent text: $sharedText")
+        }
     }
 }

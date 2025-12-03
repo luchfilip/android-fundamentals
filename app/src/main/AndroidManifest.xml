@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Day 2 Exercise 1: Add internet permission here. See Hints.Day2Exercise1 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:name=".HoarderApp"
@@ -25,15 +26,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Day 2 Exercise 5: Add share intent filter here
-            action.SEND category.DEFAULT
-            data mimeType="text/plain"
-                 Stuck? See Hints.Day2Exercise5 -->
-
             <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
             </intent-filter>
         </activity>
         <activity android:name=".SecondActivity"

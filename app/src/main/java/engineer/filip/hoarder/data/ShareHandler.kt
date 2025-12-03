@@ -1,33 +1,27 @@
 package engineer.filip.hoarder.data
 
-import engineer.filip.hoarder.ui.Hints
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import javax.inject.Inject
+
 import javax.inject.Singleton
 
-/**
- * Day 2 Exercise 6: Implement share intent handling.
- *
- * Create a singleton that holds pending shared content using StateFlow.
- * MainActivity calls onShareReceived(), ViewModel observes pendingShare.
- *
- * Stuck? See Hints.Day2Exercise6
- */
+
 @Singleton
 class ShareHandler @Inject constructor() {
 
-    // TODO: Create private MutableStateFlow<String?> and expose as StateFlow
-    val pendingShare: StateFlow<String?> = MutableStateFlow(null)
+    private val _pendingShare = MutableStateFlow<String?>(null)
+    val pendingShare: StateFlow<String?> = _pendingShare.asStateFlow()
 
-    fun onShareReceived(text: String) {
-        // TODO: Set pending share value
+    fun onShareReceived(text: String?) {
+        text?.let { input ->
+            _pendingShare.update { input }
+        }
     }
 
-    fun consumeShare() {
-        // TODO: Clear pending share
+    fun consumeIntent() {
+        _pendingShare.update { null }
     }
-
-    @Suppress("unused")
-    private val _hint = Hints.Day2Exercise6
 }
