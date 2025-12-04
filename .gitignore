@@ -9,6 +9,7 @@
 .claude
 .gira
 .ai
+sources
 
 # Java class files
 *.class
