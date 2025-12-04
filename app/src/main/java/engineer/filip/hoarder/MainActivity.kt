@@ -24,6 +24,7 @@ import engineer.filip.hoarder.ui.Hints
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import engineer.filip.hoarder.R
 import javax.inject.Inject
 
 /**
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("GRAY", "build URL: ${BuildConfig.API_URL}")
         enableEdgeToEdge()
         handleShareIntent(intent)
         // TODO: Handle share intent

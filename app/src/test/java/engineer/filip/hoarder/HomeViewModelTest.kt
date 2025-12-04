@@ -28,26 +28,46 @@ class HomeViewModelTest {
 
     private lateinit var repository: FakeBookmarkRepository
     private lateinit var viewModel: HomeViewModel
-
+    private lateinit var shareHandler: ShareHandler
     @Before
     fun setup() {
         repository = FakeBookmarkRepository()
-        viewModel = HomeViewModel(repository)
+        shareHandler = ShareHandler()
+        viewModel = HomeViewModel(repository, shareHandler)
     }
 
     @Test
     fun `initial state has empty bookmarks`() = runTest {
-        // TODO: Implement
+        val state = viewModel.uiState.value
+        assertTrue(state.bookmarks.isEmpty())
     }
 
     @Test
     fun `adding bookmark updates state`() = runTest {
-        // TODO: Implement
+        viewModel.onAction(HomeAction.LoadBookmarks)
+        val bookmark = Bookmark(
+            id = "1",
+            title = "Title",
+            url = "https://google.com"
+        )
+        viewModel.onAction(HomeAction.AddBookmark(bookmark))
+        assertEquals(1, viewModel.uiState.value.bookmarks.size)
     }
 
     @Test
     fun `deleting bookmark removes from state`() = runTest {
-        // TODO: Implement
+        viewModel.onAction(HomeAction.LoadBookmarks)
+        val bookmark = Bookmark(
+            id = "X",
+            title = "title",
+            url = "url"
+        )
+        viewModel.onAction(HomeAction.AddBookmark(bookmark))
+        advanceUntilIdle()
+        assert(viewModel.uiState.value.bookmarks.find { it.id == "X" } != null)
+        viewModel.onAction(HomeAction.DeleteBookmark(bookmark.id))
+        advanceUntilIdle()
+        assert(viewModel.uiState.value.bookmarks.find { it.id == "X" } == null)
     }
 
     @Test
@@ -57,6 +77,10 @@ class HomeViewModelTest {
 
     @Test
     fun `error state is set when repository throws`() = runTest {
-        // TODO: Implement
+        repository.shouldThrowError = true
+
+        viewModel.onAction(HomeAction.LoadBookmarks)
+        advanceUntilIdle()
+        assertEquals("Unknown error", viewModel.uiState.value.error)
     }
 }

@@ -37,24 +37,24 @@ class BookmarkRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getBookmarks(): List<Bookmark> {
+    override suspend fun getBookmarks(): List<Bookmark> = withContext(Dispatchers.IO) {
         val json = prefs.getString("bookmarks_key", null)
         val prefsBookmarks = json.toBookmarkList()
         bookmarks.clear()
         bookmarks.addAll(prefsBookmarks)
-        return bookmarks.toList()
+        bookmarks.toList()
     }
 
-    override suspend fun getBookmarkById(id: String): Bookmark? {
-        return bookmarks.find { it.id == id }
+    override suspend fun getBookmarkById(id: String): Bookmark? = withContext(Dispatchers.IO) {
+        bookmarks.find { it.id == id }
     }
 
-    override suspend fun addBookmark(bookmark: Bookmark) {
+    override suspend fun addBookmark(bookmark: Bookmark) = withContext(Dispatchers.IO) {
         bookmarks.add(bookmark)
         saveToPrefs()
     }
 
-    override suspend fun updateBookmark(bookmark: Bookmark) {
+    override suspend fun updateBookmark(bookmark: Bookmark) = withContext(Dispatchers.IO) {
         val index = bookmarks.indexOfFirst { it.id == bookmark.id }
         if (index != -1) {
             bookmarks[index] = bookmark
@@ -62,12 +62,12 @@ class BookmarkRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteBookmark(bookmarkId: String) {
+    override suspend fun deleteBookmark(bookmarkId: String) = withContext(Dispatchers.IO) {
         bookmarks.removeAll { it.id == bookmarkId }
         saveToPrefs()
     }
 
-    override suspend fun clearAll() {
+    override suspend fun clearAll() = withContext(Dispatchers.IO) {
         bookmarks.clear()
         saveToPrefs()
     }

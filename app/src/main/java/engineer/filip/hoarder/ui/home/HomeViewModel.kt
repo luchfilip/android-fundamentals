@@ -78,7 +78,6 @@ class HomeViewModel @Inject constructor(
     // TODO Exercise 13: Add search query flow for debounce
 
     init {
-        loadBookmarks()
         observeSharedContent()
         observeDeeplink()
         observeSearch()
@@ -161,14 +160,14 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun clearAll() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             repository.clearAll()
             loadBookmarks()
         }
     }
 
     private fun loadBookmarks() {
-        viewModelScope.launch(context = Dispatchers.IO) {
+        viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val bookmarks = repository.getBookmarks()
@@ -193,14 +192,14 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun addBookmark(bookmark: Bookmark) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             repository.addBookmark(bookmark.copy(title = bookmark.title))
             loadBookmarks()
         }
     }
 
     private fun deleteBookmark(bookmarkId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             repository.deleteBookmark(bookmarkId)
             loadBookmarks()
         }

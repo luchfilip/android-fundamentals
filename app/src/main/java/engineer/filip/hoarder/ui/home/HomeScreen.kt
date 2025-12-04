@@ -110,6 +110,10 @@ fun HomeScreen(
 
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.onAction(HomeAction.LoadBookmarks)
+    }
+
     // Observe one-time events for navigation
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
