@@ -16,9 +16,13 @@ import engineer.filip.hoarder.ui.Hints
 @Immutable
 data class HomeUiState(
     val bookmarks: List<Bookmark> = emptyList(),
+    val filteredBookmarks: List<Bookmark> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val counter: Int = 0
+    val counter: Int = 0,
+    val searchQuery: String = "",
+    val hasLocationCoarsePermission: Boolean = false,
+    val hasLocationFinePermission: Boolean = false
     // TODO Day 2 Exercise 13: Add val searchQuery: String = ""
 ) {
     @Suppress("unused") private val _hint10 = Hints.Exercise10

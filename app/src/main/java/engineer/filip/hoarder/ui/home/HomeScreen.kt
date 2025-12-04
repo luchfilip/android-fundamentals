@@ -1,5 +1,12 @@
 package engineer.filip.hoarder.ui.home
 
+import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.drawable.Icon
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +26,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddLocationAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.LocationOff
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,6 +38,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -42,9 +53,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -54,6 +67,7 @@ import engineer.filip.hoarder.data.model.Bookmark
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.UUID
+import java.util.jar.Manifest
 
 /**
  * Screen-level composable. Handles ViewModel and state management.
@@ -69,12 +83,33 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(Unit) {
-        scope.launch {
 
+    val locationPermissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        when {
+            fineLocationGranted && coarseLocationGranted -> {
+                viewModel.onAction(HomeAction.OnFineLocationPermissionUpdated(true))
+            }
+            coarseLocationGranted -> {
+                viewModel.onAction(HomeAction.OnCoarseLocationPermissionUpdated(true))
+            }
+            else -> {
+
+            }
         }
     }
+
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        val hasPermission = ContextCompat.checkSelfPermission(context,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    }
+
     // Observe one-time events for navigation
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -93,7 +128,15 @@ fun HomeScreen(
 
     HomeContent(
         state = uiState,
-        onAction = viewModel::onAction
+        onAction = viewModel::onAction,
+        onRequestPermissions = {
+            locationPermissionsLauncher.launch(
+                arrayOf(
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
     )
 }
 
@@ -105,7 +148,8 @@ fun HomeScreen(
 fun HomeContent(
     state: HomeUiState,
     onAction: (HomeAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRequestPermissions: () -> Unit
 ) {
 
     Scaffold(
@@ -115,6 +159,19 @@ fun HomeContent(
                 title = { Text("Hoarder") },
                 // TODO Exercise 11: Add ClearAll IconButton. See Hints.Exercise11
                 actions = {
+                    val icon = when {
+                        state.hasLocationCoarsePermission -> Icons.Default.LocationOn
+                        state.hasLocationFinePermission -> Icons.Default.AddLocationAlt
+                        else -> {
+                           Icons.Default.LocationOff
+                        }
+                    }
+                    Icon(imageVector = icon,
+                        contentDescription = "location icon",
+                        modifier = Modifier.clickable {
+                            Log.d("HomeScreen", "icon clicked")
+                            onRequestPermissions()
+                        }.padding(8.dp))
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "delete all",
@@ -128,12 +185,16 @@ fun HomeContent(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    onAction(HomeAction.AddBookmark(Bookmark(
-                        id = UUID.randomUUID().toString(),
-                        title = "Bookmark Title",
-                        url = "https://google.com",
-                        notes = "My custom note"
-                    )))
+                    onAction(
+                        HomeAction.AddBookmark(
+                            Bookmark(
+                                id = UUID.randomUUID().toString(),
+                                title = "Bookmark Title",
+                                url = "https://google.com",
+                                notes = "My custom note"
+                            )
+                        )
+                    )
                 }
             ) {
                 Text(
@@ -151,20 +212,57 @@ fun HomeContent(
         // Day 3 Exercise 4b: Find the performance issue in this LazyColumn
         // Hint: Look at how lambdas are passed to BookmarkItem
         // Stuck? See Hints.Day3Exercise4b
-        when {
-            state.bookmarks.isEmpty() -> {
-                EmptyState(modifier = Modifier.padding(innerPadding))
-            }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            SearchInput(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                searchQuery = state.searchQuery,
+                onAction = onAction
+            )
+            when {
+                state.bookmarks.isEmpty() -> {
+                    EmptyState(modifier = Modifier)
+                }
 
-            else -> {
-                BookmarkItems(
-                    modifier = Modifier.padding(innerPadding),
-                    bookmarks = state.bookmarks,
-                    onAction = onAction
-                )
+                else -> {
+                    val bookmarks =
+                        if (state.searchQuery.isEmpty()) state.bookmarks else state.filteredBookmarks
+                    BookmarkItems(
+                        modifier = Modifier,
+                        bookmarks = bookmarks,
+                        onAction = onAction
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+fun SearchInput(
+    modifier: Modifier,
+    searchQuery: String = "",
+    onAction: (HomeAction) -> Unit
+) {
+    OutlinedTextField(
+        modifier = modifier,
+        value = searchQuery,
+        label = { Text("Search bookmarks") },
+        onValueChange = {
+            onAction(HomeAction.SearchQueryChanged(it))
+        }
+    )
+}
+
+@Preview
+@Composable
+fun SearchInputPreview() {
+    SearchInput(Modifier) {}
 }
 
 @Composable
@@ -203,9 +301,11 @@ fun BookmarkItem(
         onClick = onClick,
         elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
         shape = RoundedCornerShape(40.dp),
-        modifier = modifier.fillMaxSize().graphicsLayer() {
-            clip = false
-        }
+        modifier = modifier
+            .fillMaxSize()
+            .graphicsLayer() {
+                clip = false
+            }
     ) {
         Row(
             modifier = Modifier
@@ -300,7 +400,8 @@ private fun HomeContentPreview() {
             )
         ),
         onAction = {},
-        modifier = Modifier.padding(WindowInsets.safeDrawing.asPaddingValues())
+        modifier = Modifier.padding(WindowInsets.safeDrawing.asPaddingValues()),
+        onRequestPermissions = {}
     )
 }
 
@@ -310,6 +411,7 @@ private fun HomeContentEmptyPreview() {
     HomeContent(
         state = HomeUiState(bookmarks = emptyList()),
         onAction = {},
-        modifier = Modifier.padding(WindowInsets.safeDrawing.asPaddingValues())
+        modifier = Modifier.padding(WindowInsets.safeDrawing.asPaddingValues()),
+        onRequestPermissions = {}
     )
 }

@@ -15,6 +15,9 @@ class ShareHandler @Inject constructor() {
     private val _pendingShare = MutableStateFlow<String?>(null)
     val pendingShare: StateFlow<String?> = _pendingShare.asStateFlow()
 
+    private val _deeplinkData = MutableStateFlow<String?>(null)
+    val deeplinkData: StateFlow<String?> = _deeplinkData.asStateFlow()
+
     fun onShareReceived(text: String?) {
         text?.let { input ->
             _pendingShare.update { input }
@@ -23,5 +26,15 @@ class ShareHandler @Inject constructor() {
 
     fun consumeIntent() {
         _pendingShare.update { null }
+    }
+
+    fun onDeeplinkReceived(id: String?) {
+        id?.let { bookmarkId ->
+            _deeplinkData.update { bookmarkId }
+        }
+    }
+
+    fun consumeDeeplink() {
+        _deeplinkData.update { null }
     }
 }

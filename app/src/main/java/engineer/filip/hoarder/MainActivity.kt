@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -76,11 +77,19 @@ class MainActivity : ComponentActivity() {
 
     private fun handleShareIntent(intent: Intent?) {
         Log.d("MainActivity", "intent: $intent")
-        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-//            val sharedText = intent.extras.toString()
-            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
-            shareHandler.onShareReceived(sharedText)
-            Log.d("MainActivity", "intent text: $sharedText")
+
+        when (intent?.action) {
+            Intent.ACTION_SEND -> {
+                if (intent.type == "text/plain") {
+                    val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+                    shareHandler.onShareReceived(sharedText)
+                    Log.d("MainActivity", "intent text: $sharedText")
+                }
+            }
+            Intent.ACTION_VIEW -> {
+                val id = intent.data.toString().toUri().lastPathSegment
+                shareHandler.onDeeplinkReceived(id)
+            }
         }
     }
 }

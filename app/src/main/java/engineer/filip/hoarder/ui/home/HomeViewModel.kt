@@ -7,9 +7,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import engineer.filip.hoarder.data.ShareHandler
 import engineer.filip.hoarder.data.model.Bookmark
 import engineer.filip.hoarder.data.repository.BookmarkRepository
+import engineer.filip.hoarder.navigation.Home
 import engineer.filip.hoarder.ui.Hints
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,9 +44,10 @@ sealed interface HomeAction {
     data class DeleteBookmarkClick(val bookmarkId: String) : HomeAction
     data class BookmarkClick(val bookmarkId: String) : HomeAction
     data object ClearAll : HomeAction
+    data class SearchQueryChanged(val query: String): HomeAction
+    data class OnCoarseLocationPermissionUpdated(val hasPermission: Boolean): HomeAction
+    data class OnFineLocationPermissionUpdated(val hasPermission: Boolean): HomeAction
     // TODO Day 1 Exercise 11: Add data object ClearAll : HomeAction
-
-    // TODO Day 2 Exercise 13: Add data class SearchQueryChanged(val query: String) : HomeAction
 
     @Suppress("unused")
     private val _hint11: Any get() = Hints.Exercise11
@@ -69,18 +73,45 @@ class HomeViewModel @Inject constructor(
     private val _events = MutableSharedFlow<HomeEvent>()
     val events: SharedFlow<HomeEvent> = _events.asSharedFlow()
 
+    private val searchQuery = MutableStateFlow("")
+
     // TODO Exercise 13: Add search query flow for debounce
 
     init {
         loadBookmarks()
         observeSharedContent()
-
+        observeDeeplink()
+        observeSearch()
         // TODO Exercise 13: Call observeSearch()
     }
 
     // TODO Exercise 8: Implement observeSharedContent()
     // TODO Exercise 9: Implement extractTitle(text: String)
     // TODO Exercise 13: Implement observeSearch()
+
+    @OptIn(FlowPreview::class)
+    private fun observeSearch() {
+        viewModelScope.launch {
+            searchQuery.debounce(300).collect { query ->
+                val filteredBookmarks = uiState.value.bookmarks.filter {
+                    it.title.contains(query, ignoreCase = true) ||
+                    it.url.contains(query, ignoreCase = true)
+                }
+                _uiState.update { it.copy(
+                    filteredBookmarks = filteredBookmarks
+                ) }
+            }
+        }
+    }
+
+    private fun observeDeeplink() {
+        viewModelScope.launch {
+            shareHandler.deeplinkData.filterNotNull().collect { id ->
+                onBookmarkClick(id)
+                shareHandler.consumeDeeplink()
+            }
+        }
+    }
 
     private fun observeSharedContent() {
         viewModelScope.launch {
@@ -113,8 +144,20 @@ class HomeViewModel @Inject constructor(
             is HomeAction.BookmarkClick -> onBookmarkClick(action.bookmarkId)
             // TODO Exercise 11: Handle ClearAll
             // TODO Exercise 13: Handle SearchQueryChanged
-            HomeAction.ClearAll -> clearAll()
+            is HomeAction.ClearAll -> clearAll()
+            is HomeAction.SearchQueryChanged -> onSearchQueryChanged(action.query)
+            is HomeAction.OnCoarseLocationPermissionUpdated -> {
+                _uiState.update { it.copy(hasLocationCoarsePermission = action.hasPermission) }
+            }
+            is HomeAction.OnFineLocationPermissionUpdated -> {
+                _uiState.update { it.copy(hasLocationFinePermission = action.hasPermission) }
+            }
         }
+    }
+
+    private fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        searchQuery.update { query }
     }
 
     private fun clearAll() {
@@ -164,7 +207,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun onBookmarkClick(bookmarkId: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             _events.emit(HomeEvent.NavigateToDetail(bookmarkId))
         }
     }
